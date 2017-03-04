@@ -16,6 +16,9 @@ get_detail_url_head = "https://api.steampowered.com/IDOTA2Match_570/GetMatchDeta
 all_match_id = []
 # 存储所有比赛详情list
 all_match_details = []
+# 存储初步处理后的详情数据
+all_match_details_treated = []
+
 # 5次遍历取到500场比赛id(每次获取上限为100场)
 for i in range(0, 5):
     # 拼接后的url
@@ -35,16 +38,90 @@ for i in range(0, 5):
 print len(all_match_id)
 
 # 500次调取接口获取500场比赛详情
-for i in range(0, 500):
+for i in range(0, 10):
     current_match_id = str(all_match_id[i])
     url = get_detail_url_head + "key=" + steam_key + "&" + "match_id=" + current_match_id
     match_manager = requests.get(url)
     response_dict = match_manager.json()
     result_dict = response_dict['result']
-    all_match_details.append(response_dict)
+    all_match_details.append(result_dict)
     print len(all_match_details)
+print (all_match_details)
+# 定义存储初步处理数据的类
+
+# file_object = open('matches_details.txt', 'w')
+# for match_detail in all_match_details:
+#     file_object.write(match_detail)
+#     file_object.write('\n')
+# file_object.close()
 
 
+class MatchDetailData:
+
+    def __init__(self):
+        self.our_gmp = 0.0
+        self.our_hero_damage = 0.0
+        self.our_tower_damage = 0.0
+        self.their_gpm = 0.0
+        self.kda = 0.0
+        self.last_hits = 0.0
+        self.denies = 0.0
+        self.gpm = 0.0
+        self.xpm = 0.0
+        self.hero_damage = 0.0
+        self.tower_damage = 0.0
+        self.time = 0.0
+
+# 初步处理数据
+for match_detail in all_match_details:
+    current_data = MatchDetailData()
+    current_data.time = float(match_detail['duration'])
+    current_players = match_detail['players']
+    position_flag = 0
+
+    for i in range(0, 10):
+        current_player = current_players[i]
+        if current_player['account_id'] == player_id:
+            position_flag = i
+            break
+
+    if position_flag < 5:
+        for i in range(0, 5):
+            current_player = current_players[i]
+            current_data.our_gmp += float(current_player['gold_per_min'])
+            current_data.our_hero_damage += float(current_player['hero_damage'])
+            current_data.our_tower_damage += float(current_player['tower_damage'])
+        for i in range(5, 10):
+            current_player = current_players[i]
+            current_data.their_gpm += float(current_player['gold_per_min'])
+    else:
+        for i in range(5, 10):
+            current_player = current_players[i]
+            current_data.our_gmp += float(current_player['gold_per_min'])
+            current_data.our_hero_damage += float(current_player['hero_damage'])
+            current_data.our_tower_damage += float(current_player['tower_damage'])
+        for i in range(0, 5):
+            current_player = current_players[i]
+            current_data.their_gpm += float(current_player['gold_per_min'])
+
+    main_player = current_players[position_flag]
+    kills = float(main_player['kills'])
+    assists = float(main_player['assists'])
+    deaths = float(main_player['deaths'])
+    if deaths == 0.0:
+        deaths = 1.0
+    current_data.kda = (kills + assists) / deaths
+    current_data.last_hits = float(main_player['last_hits'])
+    current_data.denies = float(main_player['denies'])
+    current_data.gpm = float(main_player['gold_per_min'])
+    current_data.xpm = float(main_player['xp_per_min'])
+    current_data.hero_damage = float(main_player['hero_damage'])
+    current_data.tower_damage = float(main_player['tower_damage'])
+    all_match_details_treated.append(current_data)
+
+print len(all_match_details_treated)
+temp = all_match_details_treated[0]
+print (temp.denies)
 # print (url)
 # print type(url)
 # print (response_dict)
@@ -53,3 +130,4 @@ for i in range(0, 500):
 # print type(result_dict)
 # print (match_arr)
 # print type(match_arr)
+
