@@ -1,6 +1,7 @@
 # coding=utf-8
 
 import requests
+import json
 
 # steam密钥
 steam_key = "46B889517E8A36598BCE2C18F38A0E3F"
@@ -35,10 +36,8 @@ for i in range(0, 5):
     match_start_id = str(last_id)
     print (match_start_id)
 
-print len(all_match_id)
-
 # 500次调取接口获取500场比赛详情
-for i in range(0, 10):
+for i in range(0, 500):
     current_match_id = str(all_match_id[i])
     url = get_detail_url_head + "key=" + steam_key + "&" + "match_id=" + current_match_id
     match_manager = requests.get(url)
@@ -46,16 +45,14 @@ for i in range(0, 10):
     result_dict = response_dict['result']
     all_match_details.append(result_dict)
     print len(all_match_details)
-print (all_match_details)
+
+# 写入json文件
+file_object = open('matches_details.json', 'w')
+json.dump(all_match_details, file_object)
+file_object.close()
+
+
 # 定义存储初步处理数据的类
-
-# file_object = open('matches_details.txt', 'w')
-# for match_detail in all_match_details:
-#     file_object.write(match_detail)
-#     file_object.write('\n')
-# file_object.close()
-
-
 class MatchDetailData:
 
     def __init__(self):
@@ -119,15 +116,16 @@ for match_detail in all_match_details:
     current_data.tower_damage = float(main_player['tower_damage'])
     all_match_details_treated.append(current_data)
 
-print len(all_match_details_treated)
-temp = all_match_details_treated[0]
-print (temp.denies)
-# print (url)
-# print type(url)
-# print (response_dict)
-# print type(response_dict)
-# print (result_dict)
-# print type(result_dict)
-# print (match_arr)
-# print type(match_arr)
+# 对象转字典
+all_match_details_treated_dict = []
+for match_detail_treated in all_match_details_treated:
+    match_detail_treated_dict = match_detail_treated.__dict__
+    all_match_details_treated_dict.append(match_detail_treated_dict)
+
+# 写入json文件
+file_object = open('matches_details_treated.json', 'w')
+json.dump(all_match_details_treated_dict, file_object)
+file_object.close()
+
+
 
